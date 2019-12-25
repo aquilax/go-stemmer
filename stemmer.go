@@ -1,3 +1,5 @@
+// Package stemmer provides function to stem bulgarian words using the BULSTEM
+// set of rules.
 package stemmer
 
 import (
