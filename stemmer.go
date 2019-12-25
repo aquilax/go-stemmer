@@ -2,6 +2,7 @@ package stemmer
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -12,22 +13,29 @@ type Rules map[string]string
 
 // LoadRules loads stemming rules from a file
 func LoadRules(fileName string, stemBoundary int) (Rules, error) {
-	var err error
-	var rules = make(Rules)
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
+	return LoadRulesStream(file, stemBoundary)
+}
 
-	scanner := bufio.NewScanner(file)
+// LoadRulesStream loads stemming rules from a stream
+func LoadRulesStream(reader io.Reader, stemBoundary int) (Rules, error) {
+	scanner := bufio.NewScanner(reader)
 	re := regexp.MustCompile(`([^\s]+)\s==>\s([^\s]+)\s([\d]+)`)
 	var matches []string
 	var boundary int
+	var err error
+	rules := make(Rules)
 	for scanner.Scan() {
 		matches = re.FindStringSubmatch(scanner.Text())
 		if len(matches) == 4 {
 			boundary, err = strconv.Atoi(matches[3])
+			if err != nil {
+				return nil, err
+			}
 			if boundary > stemBoundary {
 				rules[matches[1]] = matches[2]
 			}
